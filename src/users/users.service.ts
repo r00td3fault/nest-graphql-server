@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { UpdateUserInput } from './dto/update-user.input';
 
 import { SignupInput } from '../auth/dto/inputs/singup.input';
+import { ValidRoles } from '../auth/enums/valid-roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -32,8 +33,19 @@ export class UsersService {
     }
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(roles: ValidRoles[]): Promise<User[]> {
+    if (roles.length === 0)
+      return this.usersRepository.find({
+        relations: {
+          lastUpdatedBy: true
+        }
+      });
+
+    return this.usersRepository.createQueryBuilder('user')
+      .leftJoinAndSelect('user.lastUpdatedBy', 'adminUser')
+      .where('ARRAY[user.roles] && ARRAY[:...roles]', { roles })
+      .getMany();
+
   }
 
   async findOneByEmail(email: string): Promise<User> {
@@ -56,12 +68,33 @@ export class UsersService {
     }
   }
 
-  update(id: string, updateUserInput: UpdateUserInput) {
-    return {};
+  async update(id: string, updateUserInput: UpdateUserInput, adminUser: User): Promise<User> {
+
+    try {
+
+      const user = await this.usersRepository.preload({
+        ...updateUserInput,
+        id,
+        password: (updateUserInput.password) ? bcrypt.hashSync(updateUserInput.password, 10) : undefined,
+        lastUpdatedBy: adminUser
+      })
+      return await this.usersRepository.save(user);
+
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+
   }
 
-  async block(id: string): Promise<User> {
-    throw new Error('')
+  async block(id: string, adminUser: User): Promise<User> {
+
+    const userToBlock = await this.findOneById(id);
+
+    userToBlock.isActive = false;
+    userToBlock.lastUpdatedBy = adminUser;
+
+    return await this.usersRepository.save(userToBlock);
+
   }
 
   private handleDBErrors(error: any): never {
