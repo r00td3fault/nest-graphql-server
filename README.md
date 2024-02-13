@@ -22,3 +22,4 @@ yarn start:dev
 ```
 localhost:3000/graphql
 ```
+7. En dev ejecutar la "mutacion" executeSeed para poblar data inicial

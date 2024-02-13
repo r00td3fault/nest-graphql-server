@@ -12,7 +12,7 @@ import { ItemsModule } from '../items/items.module';
   ],
   providers: [UsersResolver, UsersService],
   exports: [
-    // TypeOrmModule,
+    TypeOrmModule,
     UsersService
   ]
 })
