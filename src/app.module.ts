@@ -25,11 +25,11 @@ import { AuthModule } from './auth/auth.module';
         autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
         plugins: [ApolloServerPluginLandingPageLocalDefault()],
         context({ req }) {
-          const token = req.headers.authorization?.replace('Bearer ', '');
-          if (!token) throw Error('Token needed');
+          // const token = req.headers.authorization?.replace('Bearer ', '');
+          // if (!token) throw Error('Token needed');
 
-          const payload = jwtService.decode(token);
-          if (!payload) throw Error('Token not valid');
+          // const payload = jwtService.decode(token);
+          // if (!payload) throw Error('Token not valid');
 
         }
       })

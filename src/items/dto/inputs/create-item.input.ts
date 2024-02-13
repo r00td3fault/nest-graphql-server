@@ -10,10 +10,10 @@ export class CreateItemInput {
   name: string;
 
 
-  @Field(() => Float, { name: 'quantity' })
-  @IsNumber()
-  @Min(1)
-  quantity: number;
+  // @Field(() => Float, { name: 'quantity' })
+  // @IsNumber()
+  // @Min(1)
+  // quantity: number;
 
 
   @Field(() => String, { name: 'quantityUnits', nullable: true })
