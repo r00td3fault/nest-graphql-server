@@ -8,6 +8,8 @@ import { UpdateUserInput } from './dto/update-user.input';
 
 import { SignupInput } from '../auth/dto/inputs/singup.input';
 import { ValidRoles } from '../auth/enums/valid-roles.enum';
+import { PaginationArgs } from '../common/dto/args/pagination.args';
+import { SearchArgs } from '../common/dto/args/search.args';
 
 @Injectable()
 export class UsersService {
@@ -33,18 +35,38 @@ export class UsersService {
     }
   }
 
-  async findAll(roles: ValidRoles[]): Promise<User[]> {
-    if (roles.length === 0)
-      return this.usersRepository.find({
-        relations: {
-          lastUpdatedBy: true
-        }
-      });
+  async findAll(
+    roles: ValidRoles[],
+    paginatorArgs: PaginationArgs,
+    searchArgs: SearchArgs,
+  ): Promise<User[]> {
 
-    return this.usersRepository.createQueryBuilder('user')
-      .leftJoinAndSelect('user.lastUpdatedBy', 'adminUser')
-      .where('ARRAY[user.roles] && ARRAY[:...roles]', { roles })
-      .getMany();
+    const { limit, offset } = paginatorArgs;
+    const { search } = searchArgs;
+
+    try {
+
+      const queryBuilder = this.usersRepository.createQueryBuilder('user')
+        .take(limit)
+        .skip(offset);
+
+      if (roles.length !== 0) {
+        queryBuilder.andWhere('ARRAY[roles] && ARRAY[:...roles]', { roles })
+      }
+
+      if (search) {
+        queryBuilder.andWhere('LOWER("fullName") like :fullName', {
+          fullName: `%${search.toLowerCase()}%`
+        });
+      }
+
+      return queryBuilder.getMany();
+
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+
+
 
   }
 
